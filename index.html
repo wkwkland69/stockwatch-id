@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockWatch ID | Dashboard Saham Indonesia</title>
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Loading Skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #2d3748 50%, #1e293b 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 0.5rem;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+
+        /* Smooth Animations */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Sparkline Chart Container */
+        .sparkline-container {
+            height: 40px;
+            width: 80px;
+        }
+
+        /* Card Hover Effects */
+        .stock-card {
+            transition: all 0.2s ease;
+            border: 1px solid #334155;
+        }
+
+        .stock-card:hover {
+            transform: translateY(-2px);
+            border-color: #475569;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Modal Backdrop */
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 px-4 py-3">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white">StockWatch ID</h1>
+                    <p class="text-xs text-slate-400">Live Market Monitoring</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button id="refreshBtn" class="p-2 rounded-full bg-slate-800 hover:bg-slate-700 transition">
+                    <i class="fas fa-sync-alt text-slate-300"></i>
+                </button>
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Cari saham..." 
+                           class="pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm w-40 focus:w-56 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fas fa-search absolute left-3 top-2.5 text-slate-500"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="px-4 py-6 max-w-7xl mx-auto">
+        <!-- Market Overview -->
+        <section class="mb-8 fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-white">Market Overview</h2>
+                <div class="text-sm text-slate-400">
+                    <span id="lastUpdate">Update: 08:00 WIB</span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <!-- IHSG Card -->
+                <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-slate-300">IHSG</h3>
+                        <span class="text-xs px-2 py-1 bg-blue-900/30 text-blue-400 rounded">IDX</span>
+                    </div>
+                    <div class="flex items-end justify-between">
+                        <div>
+                            <p class="text-2xl font-bold text-white">7,245.68</p>
+                            <p class="text-sm mt-1">
+                                <span class="text-green-500 font-medium">
+                                    <i class="fas fa-arrow-up mr-1"></i>+1.25%
+                                </span>
+                                <span class="text-slate-400 ml-2">+89.52</span>
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-slate-400">Volume</p>
+                            <p class="text-lg font-semibold text-white">12.4B</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Gainers -->
+                <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                    <h3 class="font-semibold text-slate-300 mb-3">Top Gainers</h3>
+                    <div id="topGainers" class="space-y-2">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+
+                <!-- Top Losers -->
+                <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                    <h3 class="font-semibold text-slate-300 mb-3">Top Losers</h3>
+                    <div id="topLosers" class="space-y-2">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+
+                <!-- Market Stats -->
+                <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                    <h3 class="font-semibold text-slate-300 mb-3">Market Stats</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Advance</span>
+                            <span class="text-green-500 font-medium">245</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Decline</span>
+                            <span class="text-red-500 font-medium">120</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Unchanged</span>
+                            <span class="text-slate-400 font-medium">35</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Total Volume</span>
+                            <span class="text-white font-medium">18.2T</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Watchlist & Technical Signals -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Watchlist Section -->
+            <section class="lg:col-span-2 fade-in">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-white">Watchlist</h2>
+                    <div class="flex space-x-2">
+                        <select id="sectorFilter" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm">
+                            <option value="all">Semua Sektor</option>
+                            <option value="finance">Keuangan</option>
+                            <option value="energy">Energi</option>
+                            <option value="consumer">Konsumsi</option>
+                            <option value="infrastructure">Infrastruktur</option>
+                        </select>
+                        <select id="volumeFilter" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm">
+                            <option value="all">Volume</option>
+                            <option value="high">Tertinggi</option>
+                            <option value="low">Terendah</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="watchlistContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic stock cards -->
+                </div>
+            </section>
+
+            <!-- Technical Signal Panel -->
+            <section class="fade-in">
+                <div class="bg-slate-800 rounded-xl p-5 border border-slate-700 sticky top-24">
+                    <h2 class="text-xl font-bold text-white mb-5">Technical Signals</h2>
+                    
+                    <div id="signalPanel" class="space-y-4">
+                        <!-- Dynamic signals -->
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-slate-700">
+                        <h3 class="font-semibold text-slate-300 mb-3">Timeframe</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="timeframe-btn active bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm">1D</button>
+                            <button class="timeframe-btn bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-sm">1W</button>
+                            <button class="timeframe-btn bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-sm">1M</button>
+                            <button class="timeframe-btn bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-sm">3M</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 py-3 px-6 z-50">
+        <div class="flex justify-between items-center">
+            <a href="#" class="flex flex-col items-center text-blue-500">
+                <i class="fas fa-home text-lg"></i>
+                <span class="text-xs mt-1">Home</span>
+            </a>
+            <a href="#" class="flex flex-col items-center text-slate-400">
+                <i class="fas fa-chart-bar text-lg"></i>
+                <span class="text-xs mt-1">Charts</span>
+            </a>
+            <a href="#" class="flex flex-col items-center text-slate-400">
+                <i class="fas fa-bell text-lg"></i>
+                <span class="text-xs mt-1">Alerts</span>
+            </a>
+            <a href="#" class="flex flex-col items-center text-slate-400">
+                <i class="fas fa-cog text-lg"></i>
+                <span class="text-xs mt-1">Settings</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Stock Detail Modal -->
+    <div id="stockModal" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-slate-700">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-slate-700">
+                <div>
+                    <h2 id="modalStockSymbol" class="text-2xl font-bold text-white">BBCA</h2>
+                    <p id="modalStockName" class="text-slate-400">Bank Central Asia Tbk</p>
+                </div>
+                <div class="text-right">
+                    <p id="modalStockPrice" class="text-3xl font-bold text-white">9,450</p>
+                    <p id="modalStockChange" class="text-lg">
+                        <span class="text-green-500 font-medium">+1.25%</span>
+                        <span class="text-slate-400 ml-2">+117</span>
+                    </p>
+                </div>
+                <button id="closeModal" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+                <!-- Chart Toggle -->
+                <div class="flex mb-6">
+                    <button class="chart-period active bg-blue-600 text-white px-4 py-2 rounded-l-lg">1D</button>
+                    <button class="chart-period bg-slate-700 text-slate-300 px-4 py-2">1W</button>
+                    <button class="chart-period bg-slate-700 text-slate-300 px-4 py-2 rounded-r-lg">1M</button>
+                </div>
+
+                <!-- Chart Container -->
+                <div class="mb-8">
+                    <canvas id="detailChart" height="300"></canvas>
+                </div>
+
+                <!-- Technical Indicators -->
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-slate-900 p-4 rounded-lg">
+                        <h4 class="font-semibold text-slate-300 mb-2">RSI (14)</h4>
+                        <p id="modalRSI" class="text-2xl font-bold text-white">65</p>
+                        <p class="text-sm text-yellow-500">Neutral</p>
+                    </div>
+                    <div class="bg-slate-900 p-4 rounded-lg">
+                        <h4 class="font-semibold text-slate-300 mb-2">MACD</h4>
+                        <p id="modalMACD" class="text-2xl font-bold text-white">12.5</p>
+                        <p class="text-sm text-green-500">Bullish</p>
+                    </div>
+                </div>
+
+                <!-- Support & Resistance -->
+                <div class="bg-slate-900 p-4 rounded-lg">
+                    <h4 class="font-semibold text-slate-300 mb-3">Support & Resistance</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Resistance 3</span>
+                            <span class="text-white">9,800</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Resistance 2</span>
+                            <span class="text-white">9,650</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Resistance 1</span>
+                            <span class="text-white">9,500</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Support 1</span>
+                            <span class="text-white">9,200</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Support 2</span>
+                            <span class="text-white">9,000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Dummy Data
+        const stockData = [
+            { symbol: "BBCA", name: "Bank Central Asia", price: 9450, change_percent: 1.25, change: 117, volume: 120000000, market_cap: 900000000000, rsi: 65, trend: "bullish", sector: "finance", recommendation: "buy" },
+            { symbol: "BBRI", name: "Bank Rakyat Indonesia", price: 5050, change_percent: -0.49, change: -25, volume: 85000000, market_cap: 450000000000, rsi: 45, trend: "neutral", sector: "finance", recommendation: "hold" },
+            { symbol: "TLKM", name: "Telkom Indonesia", price: 3850, change_percent: 0.78, change:
