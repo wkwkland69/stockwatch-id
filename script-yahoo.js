@@ -464,11 +464,4 @@ function renderStockCard(stock) {
             </div>
             
             <div class="flex items-center justify-between text-sm mb-3">
-                <div class="flex items-center space-x-4">
-                    <div>
-                        <p class="text-slate-400">Volume</p>
-                        <p class="text-white font-medium">${formatVolume(stock.volume)}</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-400">Market Cap</p>
-                        <p class
+                <div class="flex items-center space
